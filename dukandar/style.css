@@ -336,4 +336,22 @@ h2, h3 { color: var(--text-main); }
     width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; outline: none;
 }
 .form-group input:focus { border-color: var(--primary-color); }
-      
+/* ================= AUTH TOGGLE STYLES ================= */
+.auth-toggle {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.auth-toggle span {
+    color: var(--primary-color);
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+.auth-toggle span:hover {
+    text-decoration: underline;
+}
+
