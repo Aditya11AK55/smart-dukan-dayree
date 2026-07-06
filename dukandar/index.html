@@ -1,47 +1,79 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>डिजिटल खाता - Udhaar Management</title>
+    <title>Digital Khata - Ledger Management</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- ==================== 1. AUTH SCREEN (Login & Sign Up) ==================== -->
     <div id="login-screen" class="screen">
         <div class="auth-container">
             <div class="auth-header">
                 <i class="fa-solid fa-book-bookmark logo-icon"></i>
-                <h2>डिजिटल खाता</h2>
-                <p>अपना उधार-जमा का हिसाब सुरक्षित रखें</p>
+                <h2>Digital Khata</h2>
+                <p>Manage your business ledger securely</p>
             </div>
+            
+            <!-- Login Form -->
             <form id="login-form">
                 <div class="input-group">
-                    <label for="login-phone">मोबाइल नंबर</label>
+                    <label for="login-phone">Mobile Number</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-phone"></i>
-                        <input type="tel" id="login-phone" placeholder="अपना नंबर डालें" required>
+                        <input type="tel" id="login-phone" placeholder="Enter mobile number" required>
                     </div>
                 </div>
                 <div class="input-group">
-                    <label for="login-password">पासवर्ड</label>
+                    <label for="login-password">Password</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-lock"></i>
-                        <input type="password" id="login-password" placeholder="अपना पासवर्ड डालें" required>
+                        <input type="password" id="login-password" placeholder="Enter password" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">लॉगिन करें</button>
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+                <p class="auth-toggle">Don't have an account? <span id="show-signup">Create Account</span></p>
+            </form>
+
+            <!-- Sign Up Form (Hidden by default) -->
+            <form id="signup-form" class="hidden">
+                <div class="input-group">
+                    <label for="signup-shop">Shop Name</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-shop"></i>
+                        <input type="text" id="signup-shop" placeholder="Enter shop name" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="signup-phone">Mobile Number</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-phone"></i>
+                        <input type="tel" id="signup-phone" placeholder="10-digit mobile number" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="signup-password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="signup-password" placeholder="Create a password" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+                <p class="auth-toggle">Already have an account? <span id="show-login">Login Here</span></p>
             </form>
         </div>
     </div>
 
+    <!-- ==================== 2. MAIN DASHBOARD SCREEN ==================== -->
     <div id="dashboard-screen" class="screen hidden">
         <header class="app-header">
             <div class="shop-info">
                 <i class="fa-solid fa-shop"></i>
-                <span id="shop-name-display">मेरी दुकान</span>
+                <span id="shop-name-display">My Shop</span>
             </div>
             <button id="logout-btn" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i></button>
         </header>
@@ -49,11 +81,11 @@
         <main class="app-body">
             <div class="summary-container">
                 <div class="summary-card total-due-card">
-                    <h3>कुल बकाया (Total Due)</h3>
+                    <h3>Total Due</h3>
                     <p class="amount">₹ <span id="total-due-amount">0</span></p>
                 </div>
                 <div class="summary-card total-collect-card">
-                    <h3>आज की वसूली</h3>
+                    <h3>Today's Collection</h3>
                     <p class="amount">₹ <span id="total-collected-amount">0</span></p>
                 </div>
             </div>
@@ -61,14 +93,14 @@
             <div class="search-container">
                 <div class="search-wrapper">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="customer-search" placeholder="ग्राहक का नाम या नंबर खोजें...">
+                    <input type="text" id="customer-search" placeholder="Search customer by name or number...">
                 </div>
             </div>
 
             <div class="customer-section">
-                <h3>आपके ग्राहक</h3>
+                <h3>Your Customers</h3>
                 <div id="customer-list" class="customer-list">
-                    <div class="empty-state">कोई ग्राहक नहीं है। नीचे दिए गए बटन से नया ग्राहक जोड़ें।</div>
+                    <div class="empty-state">No customers found. Add a new customer to get started.</div>
                 </div>
             </div>
         </main>
@@ -78,51 +110,54 @@
         </button>
     </div>
 
+    <!-- ==================== 3. CUSTOMER LEDGER SCREEN ==================== -->
     <div id="ledger-screen" class="screen hidden">
         <header class="app-header">
             <button id="back-to-dashboard" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
             <div class="customer-header-title">
-                <span id="current-customer-name">ग्राहक का नाम</span>
+                <span id="current-customer-name">Customer Name</span>
             </div>
             <button id="whatsapp-remind-btn" class="whatsapp-btn"><i class="fa-brands fa-whatsapp"></i></button>
         </header>
 
         <main class="app-body">
             <div class="customer-balance-card">
-                <p>कुल बाकी राशि</p>
+                <p>Total Due Balance</p>
                 <h2 id="current-customer-balance">₹ 0</h2>
-                <p class="customer-phone-sub" id="current-customer-phone">नंबर: -</p>
+                <p class="customer-phone-sub" id="current-customer-phone">Phone: -</p>
             </div>
 
             <div class="transaction-section">
-                <h3>लेन-देन का इतिहास (History)</h3>
+                <h3>Transaction History</h3>
                 <div id="transaction-list" class="transaction-list">
-                    </div>
+                    <!-- Transactions will appear here -->
+                </div>
             </div>
         </main>
 
         <footer class="ledger-footer">
-            <button id="btn-gave-uudhar" class="btn btn-danger"><i class="fa-solid fa-minus-circle"></i> उधार दिया (You Gave)</button>
-            <button id="btn-got-jama" class="btn btn-success"><i class="fa-solid fa-plus-circle"></i> पैसे मिले (You Got)</button>
+            <button id="btn-gave-uudhar" class="btn btn-danger"><i class="fa-solid fa-minus-circle"></i> You Gave (-)</button>
+            <button id="btn-got-jama" class="btn btn-success"><i class="fa-solid fa-plus-circle"></i> You Got (+)</button>
         </footer>
     </div>
 
+    <!-- ==================== 4. MODALS ==================== -->
     <div id="customer-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>नया ग्राहक जोड़ें</h3>
+                <h3>Add New Customer</h3>
                 <button class="close-modal-btn">&times;</button>
             </div>
             <form id="add-customer-form">
                 <div class="form-group">
-                    <label for="new-cust-name">ग्राहक का नाम</label>
-                    <input type="text" id="new-cust-name" placeholder="नाम लिखें" required>
+                    <label for="new-cust-name">Customer Name</label>
+                    <input type="text" id="new-cust-name" placeholder="Enter name" required>
                 </div>
                 <div class="form-group">
-                    <label for="new-cust-phone">मोबाइल नंबर</label>
-                    <input type="tel" id="new-cust-phone" placeholder="10 अंकों का नंबर" required>
+                    <label for="new-cust-phone">Mobile Number</label>
+                    <input type="tel" id="new-cust-phone" placeholder="10-digit number" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">ग्राहक सुरक्षित करें</button>
+                <button type="submit" class="btn btn-primary btn-block">Save Customer</button>
             </form>
         </div>
     </div>
@@ -130,24 +165,23 @@
     <div id="transaction-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="transaction-modal-title">एंट्री दर्ज करें</h3>
+                <h3 id="transaction-modal-title">Add Entry</h3>
                 <button class="close-modal-btn">&times;</button>
             </div>
             <form id="transaction-form">
                 <div class="form-group">
-                    <label for="trans-amount">राशि (Amount)</label>
-                    <input type="number" id="trans-amount" placeholder="₹ कितना रुपया" required>
+                    <label for="trans-amount">Amount (₹)</label>
+                    <input type="number" id="trans-amount" placeholder="Enter amount" required>
                 </div>
                 <div class="form-group">
-                    <label for="trans-remarks">विवरण (Details)</label>
-                    <input type="text" id="trans-remarks" placeholder="जैसे: 2 किलो चीनी, नगद मिला आदि">
+                    <label for="trans-remarks">Remarks / Details</label>
+                    <input type="text" id="trans-remarks" placeholder="e.g., 2kg sugar, cash received">
                 </div>
-                <button type="submit" id="submit-trans-btn" class="btn btn-block">एंट्री सेव करें</button>
+                <button type="submit" id="submit-trans-btn" class="btn btn-block">Save Entry</button>
             </form>
         </div>
     </div>
 
     <script type="module" src="app.js"></script>
 </body>
-              </html>
-              
+</html>
