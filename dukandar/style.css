@@ -1,4 +1,4 @@
-/* ================= CSS VARIABLES (कलर और थीम) ================= */
+/* ================= CSS VARIABLES (Colors and Themes) ================= */
 :root {
     --primary-color: #4361ee;
     --primary-dark: #3a56d4;
@@ -22,7 +22,7 @@
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
-    /* मोबाइल जैसा फील देने के लिए */
+    /* To give a mobile app-like feel */
     max-width: 480px; 
     margin: 0 auto;
     min-height: 100vh;
@@ -64,7 +64,7 @@ h2, h3 { color: var(--text-main); }
 .btn-success { background-color: var(--success-color); color: white; }
 .btn-block { width: 100%; }
 
-/* ================= LOGIN SCREEN ================= */
+/* ================= LOGIN & SIGNUP SCREEN ================= */
 .auth-container {
     padding: 40px 20px;
     display: flex;
@@ -235,7 +235,7 @@ h2, h3 { color: var(--text-main); }
 .fab-btn {
     position: fixed;
     bottom: 25px;
-    right: 25px; /* या अगर स्क्रीन सेंटर है तो calc(50% + 180px) */
+    right: 25px; 
     background-color: var(--primary-color);
     color: white;
     width: 60px;
@@ -262,96 +262,3 @@ h2, h3 { color: var(--text-main); }
 }
 
 .customer-balance-card p { opacity: 0.8; font-size: 14px; }
-.customer-balance-card h2 { font-size: 32px; margin: 5px 0; }
-.customer-phone-sub { font-size: 12px !important; margin-top: 5px; }
-
-/* Transaction Item */
-.trans-card {
-    background: var(--card-bg);
-    padding: 12px 15px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-left: 4px solid var(--border-color);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-}
-.trans-gave { border-left-color: var(--danger-color); }
-.trans-got { border-left-color: var(--success-color); }
-
-.trans-details .date { font-size: 12px; color: var(--text-muted); }
-.trans-details .remark { font-size: 14px; font-weight: 500; margin-top: 2px; }
-.trans-amount { font-weight: 700; font-size: 16px; }
-
-.ledger-footer {
-    position: sticky;
-    bottom: 0;
-    background: var(--card-bg);
-    padding: 15px 20px;
-    display: flex;
-    gap: 15px;
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
-}
-.ledger-footer .btn { flex: 1; font-size: 14px; }
-
-/* ================= MODALS (POPUPS) ================= */
-.modal {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: var(--card-bg);
-    width: 90%;
-    max-width: 400px;
-    border-radius: 12px;
-    padding: 20px;
-    animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-    from { transform: translateY(50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-.close-modal-btn {
-    background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted);
-}
-
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; font-size: 13px; margin-bottom: 5px; color: var(--text-muted); }
-.form-group input {
-    width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; outline: none;
-}
-.form-group input:focus { border-color: var(--primary-color); }
-/* ================= AUTH TOGGLE STYLES ================= */
-.auth-toggle {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 14px;
-    color: var(--text-muted);
-}
-
-.auth-toggle span {
-    color: var(--primary-color);
-    font-weight: 600;
-    cursor: pointer;
-    margin-left: 5px;
-}
-
-.auth-toggle span:hover {
-    text-decoration: underline;
-}
-
