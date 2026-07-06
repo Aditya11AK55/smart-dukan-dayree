@@ -18,9 +18,10 @@ const db = getFirestore(app);
 
 // ==================== GLOBAL VARIABLES ====================
 let currentUserUID = null;
-let currentCustomer = null; // Currently selected customer for ledger
+let currentCustomer = null;
 let customerCount = 0;
 let isPremiumUser = false;
+let transactionType = ""; // 'GAVE' or 'GOT'
 
 // ==================== DOM ELEMENTS ====================
 // Screens
@@ -33,6 +34,10 @@ const showSignupBtn = document.getElementById('show-signup');
 const showLoginBtn = document.getElementById('show-login');
 const loginForm = document.getElementById('login-form');
 const signupForm = document.getElementById('signup-form');
+
+// Modals
+const customerModal = document.getElementById('customer-modal');
+const transModal = document.getElementById('transaction-modal');
 
 // ==================== 1. UI TOGGLES ====================
 showSignupBtn.addEventListener('click', () => {
@@ -59,20 +64,19 @@ signupForm.addEventListener('submit', async (e) => {
     const shopName = document.getElementById('signup-shop').value;
     const phone = document.getElementById('signup-phone').value;
     const password = document.getElementById('signup-password').value;
-    const dummyEmail = `${phone}@khata.com`; // Smart trick for mobile login
+    const dummyEmail = `${phone}@khata.com`;
 
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, dummyEmail, password);
         const user = userCredential.user;
-        
-        // Save shop details in Firestore
+
         await setDoc(doc(db, "khata_shops", user.uid), {
             shopName: shopName,
             phone: phone,
             isPremium: false,
             createdAt: serverTimestamp()
         });
-        
+
         alert("Account Created Successfully!");
         signupForm.reset();
     } catch (error) {
@@ -103,14 +107,13 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUID = user.uid;
         showScreen(dashboardScreen);
-        
-        // Fetch Shop Name & Premium Status
+
         const shopDoc = await getDoc(doc(db, "khata_shops", currentUserUID));
         if (shopDoc.exists()) {
             document.getElementById('shop-name-display').innerText = shopDoc.data().shopName;
             isPremiumUser = shopDoc.data().isPremium;
         }
-        
+
         loadCustomers();
     } else {
         currentUserUID = null;
@@ -119,19 +122,18 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // ==================== 4. CUSTOMER MANAGEMENT ====================
-const customerModal = document.getElementById('customer-modal');
 document.getElementById('open-add-customer-modal').addEventListener('click', () => {
-    // FREEMIUM LOGIC: 60 Customers Limit Check
     if (customerCount >= 60 && !isPremiumUser) {
         alert("Free Limit Reached (60 Customers)! Please contact Admin on WhatsApp to upgrade to Premium.");
-        return; // Stop them from opening the modal
+        return;
     }
     customerModal.classList.remove('hidden');
 });
+
 document.querySelectorAll('.close-modal-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         customerModal.classList.add('hidden');
-        document.getElementById('transaction-modal').classList.add('hidden');
+        transModal.classList.add('hidden');
     });
 });
 
@@ -148,6 +150,7 @@ document.getElementById('add-customer-form').addEventListener('submit', async (e
             totalDue: 0,
             createdAt: serverTimestamp()
         });
+
         customerModal.classList.add('hidden');
         document.getElementById('add-customer-form').reset();
     } catch (error) {
@@ -156,13 +159,16 @@ document.getElementById('add-customer-form').addEventListener('submit', async (e
 });
 
 function loadCustomers() {
-    const q = query(collection(db, "khata_customers"), where("shopUID", "==", currentUserUID), orderBy("createdAt", "desc"));
-    
+    const q = query(
+        collection(db, "khata_customers"),
+        where("shopUID", "==", currentUserUID)
+    );
+
     onSnapshot(q, (snapshot) => {
         const listDiv = document.getElementById('customer-list');
         listDiv.innerHTML = '';
         let totalShopDue = 0;
-        customerCount = snapshot.docs.length; // Update count for Freemium check
+        customerCount = snapshot.docs.length;
 
         if (snapshot.empty) {
             listDiv.innerHTML = '<div class="empty-state">No customers found. Add a new customer to get started.</div>';
@@ -170,19 +176,22 @@ function loadCustomers() {
             return;
         }
 
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const id = docSnap.id;
-            
-            // Add to total shop due if positive
-            if(data.totalDue > 0) totalShopDue += data.totalDue;
+        const customers = snapshot.docs
+            .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
+            .sort((a, b) => {
+                const aTime = a.createdAt?.seconds || 0;
+                const bTime = b.createdAt?.seconds || 0;
+                return bTime - aTime;
+            });
+
+        customers.forEach((data) => {
+            if (data.totalDue > 0) totalShopDue += data.totalDue;
 
             const card = document.createElement('div');
             card.className = 'customer-card';
-            
-            // Format balance color
-            let balanceClass = data.totalDue > 0 ? 'balance-red' : (data.totalDue < 0 ? 'balance-green' : '');
-            let balanceText = data.totalDue >= 0 ? `₹ ${data.totalDue}` : `Adv: ₹ ${Math.abs(data.totalDue)}`;
+
+            const balanceClass = data.totalDue > 0 ? 'balance-red' : (data.totalDue < 0 ? 'balance-green' : '');
+            const balanceText = data.totalDue >= 0 ? `₹ ${data.totalDue}` : `Adv: ₹ ${Math.abs(data.totalDue)}`;
 
             card.innerHTML = `
                 <div class="customer-info">
@@ -191,24 +200,25 @@ function loadCustomers() {
                 </div>
                 <div class="customer-balance ${balanceClass}">${balanceText}</div>
             `;
-            
-            card.addEventListener('click', () => openLedger(id, data.name, data.phone, data.totalDue));
+
+            card.addEventListener('click', () => openLedger(data.id, data.name, data.phone, data.totalDue));
             listDiv.appendChild(card);
         });
 
         document.getElementById('total-due-amount').innerText = totalShopDue;
+    }, (error) => {
+        console.error("Load customers error:", error);
+        alert("Customers load nahi ho rahe. Console check karo.");
     });
 }
 
 // ==================== 5. LEDGER & TRANSACTIONS ====================
-let transactionType = ""; // 'GAVE' or 'GOT'
-
 function openLedger(id, name, phone, balance) {
     currentCustomer = { id, name, phone, balance };
     document.getElementById('current-customer-name').innerText = name;
     document.getElementById('current-customer-phone').innerText = `Phone: ${phone}`;
     document.getElementById('current-customer-balance').innerText = `₹ ${balance}`;
-    
+
     showScreen(ledgerScreen);
     loadTransactions(id);
 }
@@ -217,7 +227,8 @@ document.getElementById('back-to-dashboard').addEventListener('click', () => sho
 
 // WhatsApp Integration
 document.getElementById('whatsapp-remind-btn').addEventListener('click', () => {
-    if(!currentCustomer) return;
+    if (!currentCustomer) return;
+
     const shopName = document.getElementById('shop-name-display').innerText;
     const msg = `Namaste ${currentCustomer.name},\n\nAapka ${shopName} par ₹${currentCustomer.balance} ka udhaar baki hai. Kripya samay par jama karein.\n\nThank you!`;
     const whatsappUrl = `https://wa.me/91${currentCustomer.phone}?text=${encodeURIComponent(msg)}`;
@@ -225,7 +236,6 @@ document.getElementById('whatsapp-remind-btn').addEventListener('click', () => {
 });
 
 // Add Transaction UI
-const transModal = document.getElementById('transaction-modal');
 document.getElementById('btn-gave-uudhar').addEventListener('click', () => {
     transactionType = "GAVE";
     document.getElementById('transaction-modal-title').innerText = "You Gave (Uudhar)";
@@ -245,11 +255,10 @@ document.getElementById('transaction-form').addEventListener('submit', async (e)
     e.preventDefault();
     const amount = parseFloat(document.getElementById('trans-amount').value);
     const remarks = document.getElementById('trans-remarks').value;
-    
-    if(!currentCustomer) return;
+
+    if (!currentCustomer) return;
 
     try {
-        // 1. Add record to transactions collection
         await addDoc(collection(db, "khata_transactions"), {
             customerID: currentCustomer.id,
             shopUID: currentUserUID,
@@ -259,16 +268,14 @@ document.getElementById('transaction-form').addEventListener('submit', async (e)
             date: serverTimestamp()
         });
 
-        // 2. Update Customer's total balance
-        const newBalance = transactionType === 'GAVE' 
-            ? currentCustomer.balance + amount 
+        const newBalance = transactionType === 'GAVE'
+            ? currentCustomer.balance + amount
             : currentCustomer.balance - amount;
-            
+
         await setDoc(doc(db, "khata_customers", currentCustomer.id), {
             totalDue: newBalance
         }, { merge: true });
 
-        // Update local variable
         currentCustomer.balance = newBalance;
         document.getElementById('current-customer-balance').innerText = `₹ ${newBalance}`;
 
@@ -280,22 +287,29 @@ document.getElementById('transaction-form').addEventListener('submit', async (e)
 });
 
 function loadTransactions(customerID) {
-    const q = query(collection(db, "khata_transactions"), where("customerID", "==", customerID), orderBy("date", "desc"));
-    
+    const q = query(
+        collection(db, "khata_transactions"),
+        where("customerID", "==", customerID),
+        orderBy("date", "desc")
+    );
+
     onSnapshot(q, (snapshot) => {
         const listDiv = document.getElementById('transaction-list');
         listDiv.innerHTML = '';
-        
-        let todayCollection = 0; // Quick logic for today's collection
+
+        if (snapshot.empty) {
+            listDiv.innerHTML = '<div class="empty-state">No transactions found.</div>';
+            return;
+        }
 
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const dateObj = data.date ? data.date.toDate() : new Date();
             const dateStr = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-            
+
             const card = document.createElement('div');
             card.className = `trans-card ${data.type === 'GAVE' ? 'trans-gave' : 'trans-got'}`;
-            
+
             card.innerHTML = `
                 <div class="trans-details">
                     <p class="date">${dateStr}</p>
@@ -305,8 +319,8 @@ function loadTransactions(customerID) {
                     ${data.type === 'GAVE' ? '-' : '+'} ₹${data.amount}
                 </div>
             `;
+
             listDiv.appendChild(card);
         });
     });
-                           }
-                      
+}
