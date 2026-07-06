@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>डिजिटल खाता - Udhaar Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="login-screen" class="screen">
+        <div class="auth-container">
+            <div class="auth-header">
+                <i class="fa-solid fa-book-bookmark logo-icon"></i>
+                <h2>डिजिटल खाता</h2>
+                <p>अपना उधार-जमा का हिसाब सुरक्षित रखें</p>
+            </div>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="login-phone">मोबाइल नंबर</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-phone"></i>
+                        <input type="tel" id="login-phone" placeholder="अपना नंबर डालें" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="login-password">पासवर्ड</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="login-password" placeholder="अपना पासवर्ड डालें" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">लॉगिन करें</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="screen hidden">
+        <header class="app-header">
+            <div class="shop-info">
+                <i class="fa-solid fa-shop"></i>
+                <span id="shop-name-display">मेरी दुकान</span>
+            </div>
+            <button id="logout-btn" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </header>
+
+        <main class="app-body">
+            <div class="summary-container">
+                <div class="summary-card total-due-card">
+                    <h3>कुल बकाया (Total Due)</h3>
+                    <p class="amount">₹ <span id="total-due-amount">0</span></p>
+                </div>
+                <div class="summary-card total-collect-card">
+                    <h3>आज की वसूली</h3>
+                    <p class="amount">₹ <span id="total-collected-amount">0</span></p>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <div class="search-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="customer-search" placeholder="ग्राहक का नाम या नंबर खोजें...">
+                </div>
+            </div>
+
+            <div class="customer-section">
+                <h3>आपके ग्राहक</h3>
+                <div id="customer-list" class="customer-list">
+                    <div class="empty-state">कोई ग्राहक नहीं है। नीचे दिए गए बटन से नया ग्राहक जोड़ें।</div>
+                </div>
+            </div>
+        </main>
+
+        <button id="open-add-customer-modal" class="fab-btn">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+    </div>
+
+    <div id="ledger-screen" class="screen hidden">
+        <header class="app-header">
+            <button id="back-to-dashboard" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="customer-header-title">
+                <span id="current-customer-name">ग्राहक का नाम</span>
+            </div>
+            <button id="whatsapp-remind-btn" class="whatsapp-btn"><i class="fa-brands fa-whatsapp"></i></button>
+        </header>
+
+        <main class="app-body">
+            <div class="customer-balance-card">
+                <p>कुल बाकी राशि</p>
+                <h2 id="current-customer-balance">₹ 0</h2>
+                <p class="customer-phone-sub" id="current-customer-phone">नंबर: -</p>
+            </div>
+
+            <div class="transaction-section">
+                <h3>लेन-देन का इतिहास (History)</h3>
+                <div id="transaction-list" class="transaction-list">
+                    </div>
+            </div>
+        </main>
+
+        <footer class="ledger-footer">
+            <button id="btn-gave-uudhar" class="btn btn-danger"><i class="fa-solid fa-minus-circle"></i> उधार दिया (You Gave)</button>
+            <button id="btn-got-jama" class="btn btn-success"><i class="fa-solid fa-plus-circle"></i> पैसे मिले (You Got)</button>
+        </footer>
+    </div>
+
+    <div id="customer-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>नया ग्राहक जोड़ें</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <form id="add-customer-form">
+                <div class="form-group">
+                    <label for="new-cust-name">ग्राहक का नाम</label>
+                    <input type="text" id="new-cust-name" placeholder="नाम लिखें" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-cust-phone">मोबाइल नंबर</label>
+                    <input type="tel" id="new-cust-phone" placeholder="10 अंकों का नंबर" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">ग्राहक सुरक्षित करें</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="transaction-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="transaction-modal-title">एंट्री दर्ज करें</h3>
+                <button class="close-modal-btn">&times;</button>
+            </div>
+            <form id="transaction-form">
+                <div class="form-group">
+                    <label for="trans-amount">राशि (Amount)</label>
+                    <input type="number" id="trans-amount" placeholder="₹ कितना रुपया" required>
+                </div>
+                <div class="form-group">
+                    <label for="trans-remarks">विवरण (Details)</label>
+                    <input type="text" id="trans-remarks" placeholder="जैसे: 2 किलो चीनी, नगद मिला आदि">
+                </div>
+                <button type="submit" id="submit-trans-btn" class="btn btn-block">एंट्री सेव करें</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+              </html>
+              
