@@ -158,6 +158,7 @@ document.getElementById('add-customer-form').addEventListener('submit', async (e
     }
 });
 
+// ==================== UPDATED: loadCustomers Function (Fix for Today's Collection) ====================
 function loadCustomers() {
     const q = query(
         collection(db, "khata_customers"),
@@ -173,6 +174,7 @@ function loadCustomers() {
         if (snapshot.empty) {
             listDiv.innerHTML = '<div class="empty-state">No customers found. Add a new customer to get started.</div>';
             document.getElementById('total-due-amount').innerText = "0";
+            document.getElementById('total-collected-amount').innerText = "0";
             return;
         }
 
@@ -206,9 +208,41 @@ function loadCustomers() {
         });
 
         document.getElementById('total-due-amount').innerText = totalShopDue;
+        
+        // --- Calculate Today's Collection ---
+        calculateTodayCollection(); 
+        
     }, (error) => {
         console.error("Load customers error:", error);
         alert("Customers load nahi ho rahe. Console check karo.");
+    });
+}
+
+// Function to calculate Today's Collection
+function calculateTodayCollection() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to midnight to compare dates
+
+    const q = query(
+        collection(db, "khata_transactions"),
+        where("shopUID", "==", currentUserUID),
+        where("type", "==", "GOT") // Only count 'Jama' (money received)
+    );
+
+    onSnapshot(q, (snapshot) => {
+        let todayCollection = 0;
+        
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (data.date) {
+                const transDate = data.date.toDate();
+                if (transDate >= today) {
+                    todayCollection += data.amount;
+                }
+            }
+        });
+        
+        document.getElementById('total-collected-amount').innerText = todayCollection;
     });
 }
 
@@ -287,7 +321,6 @@ document.getElementById('transaction-form').addEventListener('submit', async (e)
 });
 
 function loadTransactions(customerID) {
-    // यहाँ से orderBy हटा दिया गया है ताकि Firebase Error ना दे
     const q = query(
         collection(db, "khata_transactions"),
         where("customerID", "==", customerID)
@@ -302,7 +335,7 @@ function loadTransactions(customerID) {
             return;
         }
 
-        // JavaScript से Sorting (ताकि नया Transaction हमेशा ऊपर दिखे)
+        // JS Sorting to avoid index requirement
         const transactions = snapshot.docs
             .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
             .sort((a, b) => {
