@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - Digital Khata</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="admin-login-screen" class="screen">
+        <div class="auth-container">
+            <div class="auth-header">
+                <i class="fa-solid fa-user-shield logo-icon" style="color: #ef4444; filter: drop-shadow(0 4px 10px rgba(239,68,68,0.25));"></i>
+                <h2>Super Admin</h2>
+                <p>System Control Panel</p>
+            </div>
+            
+            <form id="admin-login-form">
+                <div class="input-group">
+                    <label>Admin ID (Email)</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="admin-email" placeholder="Enter admin email" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Master Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-key"></i>
+                        <input type="password" id="admin-password" placeholder="Enter master password" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-danger btn-block"><i class="fa-solid fa-lock-open"></i> Secure Login</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-dashboard-screen" class="screen hidden">
+        <header class="app-header" style="background: rgba(15, 23, 42, 0.9); color: white;">
+            <div class="shop-info" style="color: white;">
+                <i class="fa-solid fa-user-shield text-danger"></i>
+                <span>Control Room</span>
+            </div>
+            <button id="admin-logout-btn" class="logout-btn" style="background: rgba(255,255,255,0.1); color: white;">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </header>
+
+        <main class="app-body">
+            <div class="summary-container">
+                <div class="summary-card" style="border-left: 4px solid #2563eb;">
+                    <h3>Total Shops</h3>
+                    <p class="amount" id="total-shops-count" style="color: #2563eb;">0</p>
+                </div>
+                <div class="summary-card" style="border-left: 4px solid #16a34a;">
+                    <h3>Premium Users</h3>
+                    <p class="amount" id="premium-shops-count" style="color: #16a34a;">0</p>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <div class="search-wrapper">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" id="admin-search-shop" placeholder="Search shop by name or number...">
+                </div>
+            </div>
+
+            <div class="shop-management-section">
+                <h3 style="margin-bottom: 15px; font-size: 16px;">All Registered Shops</h3>
+                <div id="admin-shops-list" class="admin-list-container">
+                    <div class="empty-state">Loading data from server...</div>
+                    </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
