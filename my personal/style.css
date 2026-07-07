@@ -1,0 +1,291 @@
+/* ==================== General & Base Styles ==================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    /* एडमिन पैनल के लिए थोड़ा डार्क/प्रोफेशनल बैकग्राउंड */
+    background: linear-gradient(135deg, #e2e8f0, #f8fafc, #cbd5e1);
+    color: #1e293b;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 0 20px rgba(0,0,0,0.08);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.screen {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==================== 1. Admin Login Screen ==================== */
+#admin-login-screen {
+    justify-content: center;
+    background: radial-gradient(circle at top, #ffffff, #e2e8f0);
+}
+
+.auth-container {
+    width: 90%;
+    max-width: 400px;
+    margin: auto;
+    padding: 32px 24px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.auth-header h2 {
+    font-size: 26px;
+    color: #0f172a;
+    margin-top: 10px;
+    font-weight: 700;
+}
+
+.auth-header p {
+    font-size: 13px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.input-group {
+    margin-bottom: 16px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #475569;
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    transition: 0.2s;
+}
+
+.input-wrapper:focus-within {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.input-wrapper i {
+    color: #94a3b8;
+    margin-right: 12px;
+}
+
+.input-wrapper input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+    background: transparent;
+}
+
+.btn {
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: 0.2s;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+}
+
+.btn-danger:active {
+    transform: scale(0.98);
+}
+
+/* ==================== 2. Admin Dashboard & Cards ==================== */
+.app-header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.app-body {
+    padding: 20px;
+    flex: 1;
+}
+
+/* Stats Container */
+.summary-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background: #ffffff;
+    padding: 16px;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+}
+
+.summary-card h3 {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.summary-card .amount {
+    font-size: 26px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+/* Search Bar */
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    padding: 14px 16px;
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.search-wrapper i {
+    color: #94a3b8;
+    margin-right: 12px;
+}
+
+.search-wrapper input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+}
+
+/* ==================== 3. Admin Shop Management Cards ==================== */
+.empty-state {
+    text-align: center;
+    padding: 30px 10px;
+    color: #64748b;
+    background: #ffffff;
+    border-radius: 14px;
+    font-size: 14px;
+    border: 1px dashed #cbd5e1;
+}
+
+.admin-shop-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+    border: 1px solid #e2e8f0;
+}
+
+.shop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 10px;
+}
+
+.shop-header h4 {
+    font-size: 16px;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+/* Status Badges */
+.badge {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.badge-free { background: #f1f5f9; color: #475569; }
+.badge-premium { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+.badge-blocked { background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; }
+
+/* Shop Details (Phone, Customers, Date) */
+.shop-details {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+
+.shop-details strong {
+    color: #334155;
+    font-weight: 600;
+}
+
+/* Action Buttons (Premium, Block, Delete) */
+.admin-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-sm {
+    flex: 1;
+    padding: 10px 5px;
+    border: none;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: 0.2s;
+}
+
+.btn-sm:active { transform: scale(0.95); }
+
+.btn-premium { background: linear-gradient(135deg, #10b981, #059669); }
+.btn-block-action { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.btn-delete { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.btn-unblock { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+  
