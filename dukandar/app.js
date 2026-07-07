@@ -287,10 +287,10 @@ document.getElementById('transaction-form').addEventListener('submit', async (e)
 });
 
 function loadTransactions(customerID) {
+    // यहाँ से orderBy हटा दिया गया है ताकि Firebase Error ना दे
     const q = query(
         collection(db, "khata_transactions"),
-        where("customerID", "==", customerID),
-        orderBy("date", "desc")
+        where("customerID", "==", customerID)
     );
 
     onSnapshot(q, (snapshot) => {
@@ -302,8 +302,16 @@ function loadTransactions(customerID) {
             return;
         }
 
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
+        // JavaScript से Sorting (ताकि नया Transaction हमेशा ऊपर दिखे)
+        const transactions = snapshot.docs
+            .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
+            .sort((a, b) => {
+                const aTime = a.date?.seconds || 0;
+                const bTime = b.date?.seconds || 0;
+                return bTime - aTime; 
+            });
+
+        transactions.forEach((data) => {
             const dateObj = data.date ? data.date.toDate() : new Date();
             const dateStr = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -322,5 +330,9 @@ function loadTransactions(customerID) {
 
             listDiv.appendChild(card);
         });
+    }, (error) => {
+        console.error("Load transactions error:", error);
+        alert("Transactions load nahi ho rahe. Console check karo.");
     });
 }
+    
