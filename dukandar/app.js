@@ -1,7 +1,7 @@
 // ==================== FIREBASE CONFIGURATION ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, onSnapshot, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyC0P1T-OxFHBYSWq9m5xHdL-tiDdQXsgsY",
@@ -21,31 +21,28 @@ let currentUserUID = null;
 let currentCustomer = null;
 let customerCount = 0;
 let isPremiumUser = false;
-let transactionType = ""; // 'GAVE' or 'GOT'
+let transactionType = "";
 
 // ==================== DOM ELEMENTS ====================
-// Screens
 const loginScreen = document.getElementById('login-screen');
 const dashboardScreen = document.getElementById('dashboard-screen');
 const ledgerScreen = document.getElementById('ledger-screen');
 
-// Auth UI
-const showSignupBtn = document.getElementById('show-signup');
-const showLoginBtn = document.getElementById('show-login');
 const loginForm = document.getElementById('login-form');
 const signupForm = document.getElementById('signup-form');
 
-// Modals
 const customerModal = document.getElementById('customer-modal');
 const transModal = document.getElementById('transaction-modal');
+const forgotModal = document.getElementById('forgot-password-modal');
+const changePassModal = document.getElementById('change-password-modal');
 
 // ==================== 1. UI TOGGLES ====================
-showSignupBtn.addEventListener('click', () => {
+document.getElementById('show-signup').addEventListener('click', () => {
     loginForm.classList.add('hidden');
     signupForm.classList.remove('hidden');
 });
 
-showLoginBtn.addEventListener('click', () => {
+document.getElementById('show-login').addEventListener('click', () => {
     signupForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
 });
@@ -57,13 +54,14 @@ function showScreen(screen) {
     screen.classList.remove('hidden');
 }
 
-// ==================== 2. AUTHENTICATION (Login / Signup) ====================
+// ==================== 2. AUTHENTICATION (Login & Signup) ====================
 // Sign Up
 signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const shopName = document.getElementById('signup-shop').value;
     const phone = document.getElementById('signup-phone').value;
     const password = document.getElementById('signup-password').value;
+    const pin = document.getElementById('signup-pin').value;
     const dummyEmail = `${phone}@khata.com`;
 
     try {
@@ -73,12 +71,15 @@ signupForm.addEventListener('submit', async (e) => {
         await setDoc(doc(db, "khata_shops", user.uid), {
             shopName: shopName,
             phone: phone,
+            password: password, // For recovery display
+            recoveryPin: pin,
             isPremium: false,
             createdAt: serverTimestamp()
         });
 
         alert("Account Created Successfully!");
         signupForm.reset();
+        document.getElementById('show-login').click();
     } catch (error) {
         alert("Error: " + error.message);
     }
@@ -102,7 +103,86 @@ loginForm.addEventListener('submit', async (e) => {
 // Logout
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
-// ==================== 3. REAL-TIME AUTH LISTENER ====================
+// ==================== 3. NEW: FORGOT & CHANGE PASSWORD ====================
+
+// --- Forgot Password Logic ---
+document.getElementById('show-forgot-password').addEventListener('click', () => {
+    forgotModal.classList.remove('hidden');
+});
+document.getElementById('close-forgot-modal').addEventListener('click', () => {
+    forgotModal.classList.add('hidden');
+    document.getElementById('forgot-password-form').reset();
+    document.getElementById('recovered-password-display').classList.add('hidden');
+});
+
+document.getElementById('forgot-password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const phone = document.getElementById('forgot-phone').value;
+    const pin = document.getElementById('forgot-pin').value;
+
+    try {
+        const q = query(collection(db, "khata_shops"), where("phone", "==", phone));
+        const querySnapshot = await getDocs(q);
+
+        if(querySnapshot.empty) {
+            alert("No account found with this mobile number!");
+            return;
+        }
+
+        let userData = null;
+        querySnapshot.forEach((docSnap) => { userData = docSnap.data(); });
+
+        if(userData.recoveryPin === pin) {
+            document.getElementById('show-recovered-password').innerText = userData.password;
+            document.getElementById('recovered-password-display').classList.remove('hidden');
+        } else {
+            alert("Incorrect 4-Digit Recovery PIN!");
+        }
+    } catch (error) {
+        alert("Error: " + error.message);
+    }
+});
+
+// --- Change Password Logic ---
+document.getElementById('open-change-password-btn').addEventListener('click', () => {
+    changePassModal.classList.remove('hidden');
+});
+document.getElementById('close-change-pass-modal').addEventListener('click', () => {
+    changePassModal.classList.add('hidden');
+    document.getElementById('change-password-form').reset();
+});
+
+document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPass = document.getElementById('new-pass-input').value;
+    const user = auth.currentUser;
+
+    if(!user) return;
+
+    try {
+        // 1. Update in Firebase Auth
+        await updatePassword(user, newPass);
+        
+        // 2. Update in Firestore Database (so forgot password shows new one)
+        await setDoc(doc(db, "khata_shops", user.uid), {
+            password: newPass
+        }, { merge: true });
+
+        alert("Password updated successfully!");
+        changePassModal.classList.add('hidden');
+        document.getElementById('change-password-form').reset();
+    } catch (error) {
+        // Security rule: Firebase needs recent login to change password
+        if (error.code === 'auth/requires-recent-login') {
+            alert("Security Alert: Please log out and log in again to change your password.");
+        } else {
+            alert("Error: " + error.message);
+        }
+    }
+});
+
+
+// ==================== 4. REAL-TIME AUTH LISTENER ====================
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserUID = user.uid;
@@ -121,7 +201,8 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// ==================== 4. CUSTOMER MANAGEMENT ====================
+
+// ==================== 5. CUSTOMER MANAGEMENT ====================
 document.getElementById('open-add-customer-modal').addEventListener('click', () => {
     if (customerCount >= 60 && !isPremiumUser) {
         alert("Free Limit Reached (60 Customers)! Please contact Admin on WhatsApp to upgrade to Premium.");
@@ -131,9 +212,9 @@ document.getElementById('open-add-customer-modal').addEventListener('click', () 
 });
 
 document.querySelectorAll('.close-modal-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        customerModal.classList.add('hidden');
-        transModal.classList.add('hidden');
+    btn.addEventListener('click', (e) => {
+        // Ensures only the parent modal of the clicked close button hides
+        e.target.closest('.modal').classList.add('hidden');
     });
 });
 
@@ -158,7 +239,6 @@ document.getElementById('add-customer-form').addEventListener('submit', async (e
     }
 });
 
-// ==================== UPDATED: loadCustomers Function (Fix for Today's Collection) ====================
 function loadCustomers() {
     const q = query(
         collection(db, "khata_customers"),
@@ -208,30 +288,22 @@ function loadCustomers() {
         });
 
         document.getElementById('total-due-amount').innerText = totalShopDue;
-        
-        // --- Calculate Today's Collection ---
         calculateTodayCollection(); 
-        
-    }, (error) => {
-        console.error("Load customers error:", error);
-        alert("Customers load nahi ho rahe. Console check karo.");
     });
 }
 
-// Function to calculate Today's Collection
 function calculateTodayCollection() {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to midnight to compare dates
+    today.setHours(0, 0, 0, 0);
 
     const q = query(
         collection(db, "khata_transactions"),
         where("shopUID", "==", currentUserUID),
-        where("type", "==", "GOT") // Only count 'Jama' (money received)
+        where("type", "==", "GOT")
     );
 
     onSnapshot(q, (snapshot) => {
         let todayCollection = 0;
-        
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
             if (data.date) {
@@ -241,12 +313,12 @@ function calculateTodayCollection() {
                 }
             }
         });
-        
         document.getElementById('total-collected-amount').innerText = todayCollection;
     });
 }
 
-// ==================== 5. LEDGER & TRANSACTIONS ====================
+
+// ==================== 6. LEDGER & TRANSACTIONS ====================
 function openLedger(id, name, phone, balance) {
     currentCustomer = { id, name, phone, balance };
     document.getElementById('current-customer-name').innerText = name;
@@ -259,17 +331,14 @@ function openLedger(id, name, phone, balance) {
 
 document.getElementById('back-to-dashboard').addEventListener('click', () => showScreen(dashboardScreen));
 
-// WhatsApp Integration
 document.getElementById('whatsapp-remind-btn').addEventListener('click', () => {
     if (!currentCustomer) return;
-
     const shopName = document.getElementById('shop-name-display').innerText;
     const msg = `Namaste ${currentCustomer.name},\n\nAapka ${shopName} par ₹${currentCustomer.balance} ka udhaar baki hai. Kripya samay par jama karein.\n\nThank you!`;
     const whatsappUrl = `https://wa.me/91${currentCustomer.phone}?text=${encodeURIComponent(msg)}`;
     window.open(whatsappUrl, '_blank');
 });
 
-// Add Transaction UI
 document.getElementById('btn-gave-uudhar').addEventListener('click', () => {
     transactionType = "GAVE";
     document.getElementById('transaction-modal-title').innerText = "You Gave (Uudhar)";
@@ -284,7 +353,6 @@ document.getElementById('btn-got-jama').addEventListener('click', () => {
     transModal.classList.remove('hidden');
 });
 
-// Save Transaction
 document.getElementById('transaction-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const amount = parseFloat(document.getElementById('trans-amount').value);
@@ -335,7 +403,6 @@ function loadTransactions(customerID) {
             return;
         }
 
-        // JS Sorting to avoid index requirement
         const transactions = snapshot.docs
             .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
             .sort((a, b) => {
@@ -363,9 +430,6 @@ function loadTransactions(customerID) {
 
             listDiv.appendChild(card);
         });
-    }, (error) => {
-        console.error("Load transactions error:", error);
-        alert("Transactions load nahi ho rahe. Console check karo.");
     });
-}
-    
+        }
+                
