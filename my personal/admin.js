@@ -3,13 +3,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// 👇 यहाँ आपकी नई 'Digital-Khata' प्रोजेक्ट की चाबियां डाल दी गई हैं 👇
 const firebaseConfig = {
-    apiKey: "AIzaSyC0P1T-OxFHBYSWq9m5xHdL-tiDdQXsgsY",
-    authDomain: "smart-mobile-care-19839.firebaseapp.com",
-    projectId: "smart-mobile-care-19839",
-    storageBucket: "smart-mobile-care-19839.firebasestorage.app",
-    messagingSenderId: "660542073783",
-    appId: "1:660542073783:web:f9e6bc7a733b1701105632"
+    apiKey: "AIzaSyD7dprFu5MIL4EgW0lJ0EkbBZeNguF4d3c",
+    authDomain: "digital-khata-64fa9.firebaseapp.com",
+    projectId: "digital-khata-64fa9",
+    storageBucket: "digital-khata-64fa9.firebasestorage.app",
+    messagingSenderId: "942531584479",
+    appId: "1:942531584479:web:571ff0eff5e0b1c266e46a"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -175,4 +176,4 @@ window.deleteShop = async (shopId) => {
         await deleteDoc(doc(db, "khata_shops", shopId));
     }
 };
-                  
+                
