@@ -412,6 +412,9 @@ function loadTransactions(customerID) {
                 return bTime - aTime; 
             });
 
+        // 👇 यह लाइन हमें बताएगी कि डेटा आ रहा है या नहीं (Debugging के लिए)
+        console.log("All Transactions Fetched:", transactions); 
+
         transactions.forEach((data) => {
             const dateObj = data.date ? data.date.toDate() : new Date();
             const dateStr = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -432,5 +435,5 @@ function loadTransactions(customerID) {
             listDiv.appendChild(card);
         });
     });
-}
-    
+        }
+            
