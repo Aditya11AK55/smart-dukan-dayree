@@ -17,7 +17,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ==================== SUPER ADMIN CREDENTIALS ====================
-// ध्यान दें: आपको Firebase Authentication में जाकर इस ईमेल और एक पासवर्ड के साथ मैनुअली एक अकाउंट बनाना होगा।
 const MASTER_ADMIN_EMAIL = "admin@khata.com"; 
 
 // ==================== DOM ELEMENTS ====================
@@ -41,7 +40,7 @@ loginForm.addEventListener('submit', async (e) => {
     }
 
     try {
-        // यह एडमिन लॉगिन को सिर्फ इसी सेशन (टैब) तक सीमित रखेगा
+        // FIX: सेशन को इसी टैब तक सीमित रखने के लिए setPersistence
         await setPersistence(auth, browserSessionPersistence);
         await signInWithEmailAndPassword(auth, email, password);
         loginForm.reset();
@@ -96,7 +95,6 @@ function renderShops(shopsArray) {
         return;
     }
 
-    // सबसे नए अकाउंट सबसे ऊपर दिखेंगे
     shopsArray.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
     shopsArray.forEach(shop => {
@@ -175,4 +173,3 @@ window.deleteShop = async (shopId) => {
         await deleteDoc(doc(db, "khata_shops", shopId));
     }
 };
-                       
