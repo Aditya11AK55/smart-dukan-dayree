@@ -71,9 +71,10 @@ signupForm.addEventListener('submit', async (e) => {
         await setDoc(doc(db, "khata_shops", user.uid), {
             shopName: shopName,
             phone: phone,
-            password: password, // Note: Educational purpose only
+            password: password, 
             recoveryPin: pin,
             isPremium: false,
+            isBlocked: false,
             createdAt: serverTimestamp()
         });
 
@@ -157,17 +158,38 @@ document.getElementById('change-password-form').addEventListener('submit', async
     }
 });
 
-// ==================== 4. REAL-TIME AUTH LISTENER ====================
-onAuthStateChanged(auth, async (user) => {
+// ==================== 4. REAL-TIME AUTH & ADMIN CONTROL LISTENER ====================
+onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUserUID = user.uid;
-        showScreen(dashboardScreen);
-        const shopDoc = await getDoc(doc(db, "khata_shops", currentUserUID));
-        if (shopDoc.exists()) {
-            document.getElementById('shop-name-display').innerText = shopDoc.data().shopName;
-            isPremiumUser = shopDoc.data().isPremium;
-        }
-        loadCustomers();
+        
+        // सुपर एडमिन के एक्शन्स को लाइव ट्रैक करने के लिए ऑन-स्नैपशॉट लिस्नर
+        const shopRef = doc(db, "khata_shops", currentUserUID);
+        onSnapshot(shopRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const shopData = docSnap.data();
+                
+                // 1. चेक करें कि क्या एडमिन ने दुकान को ब्लॉक किया है
+                if (shopData.isBlocked) {
+                    alert("⚠️ Your account has been suspended by the Admin. Please contact support.");
+                    signOut(auth); 
+                    return;
+                }
+                
+                // 2. प्रीमियम स्टेटस चेक करें और लाइव स्टार बैज लगाएं
+                isPremiumUser = shopData.isPremium;
+                const premiumBadge = isPremiumUser ? ' <i class="fa-solid fa-star" style="color:#f59e0b; font-size:12px;"></i>' : '';
+                document.getElementById('shop-name-display').innerHTML = shopData.shopName + premiumBadge;
+                
+                // स्क्रीन स्विच करें और डेटा लोड करें
+                showScreen(dashboardScreen);
+                loadCustomers();
+            } else {
+                // 3. चेक करें कि क्या एडमिन ने अकाउंट पूरी तरह डिलीट कर दिया है
+                alert("❌ Your account no longer exists or has been deleted.");
+                signOut(auth);
+            }
+        });
     } else {
         currentUserUID = null;
         showScreen(loginScreen);
@@ -334,7 +356,6 @@ function loadTransactions(customerID) {
             const sign = isGave ? '-' : '+';
 
             const card = document.createElement('div');
-            // फिक्स: यहाँ Style.css की क्लासेस का सही इस्तेमाल किया गया है
             card.className = `trans-card ${isGave ? 'trans-gave' : 'trans-got'}`;
 
             card.innerHTML = `
@@ -351,7 +372,7 @@ function loadTransactions(customerID) {
     });
 }
 
-// ==================== 7. NEW ADDITIONS (SEARCH & WHATSAPP) ====================
+// ==================== 7. SEARCH & WHATSAPP FUNCTIONS ====================
 
 // कस्टमर सर्च फ़ंक्शनैलिटी
 document.getElementById('customer-search').addEventListener('input', (e) => {
