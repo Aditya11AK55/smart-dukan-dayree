@@ -22,7 +22,7 @@ let currentCustomer = null;
 let customerCount = 0;
 let isPremiumUser = false;
 let transactionType = "";
-let transactionUnsubscribe = null; // 🚀 Real-time अपडेट को फ़ास्ट करने के लिए नया वेरिऐबल
+let transactionUnsubscribe = null; 
 
 // ==================== DOM ELEMENTS ====================
 const loginScreen = document.getElementById('login-screen');
@@ -71,7 +71,7 @@ signupForm.addEventListener('submit', async (e) => {
         await setDoc(doc(db, "khata_shops", user.uid), {
             shopName: shopName,
             phone: phone,
-            password: password,
+            password: password, // Note: Educational purpose only
             recoveryPin: pin,
             isPremium: false,
             createdAt: serverTimestamp()
@@ -253,7 +253,7 @@ function calculateTodayCollection() {
     });
 }
 
-// ==================== 6. LEDGER & TRANSACTIONS (BUG FIXED) ====================
+// ==================== 6. LEDGER & TRANSACTIONS ====================
 function openLedger(id, name, phone, balance) {
     currentCustomer = { id, name, phone, balance };
     document.getElementById('current-customer-name').innerText = name;
@@ -307,7 +307,6 @@ document.getElementById('transaction-form').addEventListener('submit', async (e)
 });
 
 function loadTransactions(customerID) {
-    // 🚀 फिक्स: पुराने कस्टमर का डेटा मिक्स न हो, इसके लिए पुराना कनेक्शन काट रहे हैं
     if (transactionUnsubscribe) {
         transactionUnsubscribe();
     }
@@ -335,19 +334,56 @@ function loadTransactions(customerID) {
             const sign = isGave ? '-' : '+';
 
             const card = document.createElement('div');
-            // 🚀 फिक्स: Cache को बायपास करने के लिए डिज़ाइन सीधा JavaScript से कंट्रोल किया गया है
-            card.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.9); padding: 14px 16px; margin-bottom: 12px; border-radius: 12px; border-left: 4px solid ${color}; box-shadow: 0 4px 10px rgba(0,0,0,0.05);`;
+            // फिक्स: यहाँ Style.css की क्लासेस का सही इस्तेमाल किया गया है
+            card.className = `trans-card ${isGave ? 'trans-gave' : 'trans-got'}`;
 
             card.innerHTML = `
-                <div>
-                    <p style="font-size: 12px; color: #64748b; margin-bottom: 4px;">${dateStr}</p>
-                    <p style="font-size: 14px; font-weight: 600; color: #1f2937;">${data.remarks}</p>
+                <div class="trans-details">
+                    <p class="date">${dateStr}</p>
+                    <p class="remark">${data.remarks}</p>
                 </div>
-                <div style="font-weight: 700; font-size: 16px; color: ${color};">
+                <div class="trans-amount" style="color: ${color};">
                     ${sign} ₹${data.amount}
                 </div>
             `;
             listDiv.appendChild(card);
         });
     });
-                                                            }
+}
+
+// ==================== 7. NEW ADDITIONS (SEARCH & WHATSAPP) ====================
+
+// कस्टमर सर्च फ़ंक्शनैलिटी
+document.getElementById('customer-search').addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const customerCards = document.querySelectorAll('.customer-card');
+    
+    customerCards.forEach(card => {
+        const name = card.querySelector('h4').innerText.toLowerCase();
+        const phone = card.querySelector('p').innerText;
+        
+        if (name.includes(searchTerm) || phone.includes(searchTerm)) {
+            card.style.display = 'flex';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
+
+// व्हाट्सएप रिमाइंडर भेजें फ़ंक्शनैलिटी
+document.getElementById('whatsapp-remind-btn').addEventListener('click', () => {
+    if (!currentCustomer) return;
+    
+    let message = "";
+    if (currentCustomer.balance > 0) {
+        message = `नमस्ते ${currentCustomer.name},\nडिजिटल खाता की तरफ से रिमाइंडर। आपका हमारी दुकान पर कुल बकाया (Due Balance) ₹${currentCustomer.balance} है। कृपया जल्द से जल्द इसका भुगतान करें। धन्यवाद!`;
+    } else if (currentCustomer.balance < 0) {
+        message = `नमस्ते ${currentCustomer.name},\nआपका हमारे पास ₹${Math.abs(currentCustomer.balance)} एडवांस जमा है। धन्यवाद!`;
+    } else {
+        message = `नमस्ते ${currentCustomer.name},\nआपका हमारे खाते का पूरा हिसाब क्लियर है। धन्यवाद!`;
+    }
+    
+    const whatsappUrl = `https://wa.me/91${currentCustomer.phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+});
+            
