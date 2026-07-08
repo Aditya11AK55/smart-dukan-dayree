@@ -91,21 +91,28 @@ loginForm.addEventListener('submit', async (e) => {
     const phone = document.getElementById('login-phone').value;
     const password = document.getElementById('login-password').value;
     const dummyEmail = `${phone}@khata.com`;
+    const loginBtn = document.querySelector('#login-form button');
+    
+    loginBtn.disabled = true;
+    loginBtn.innerText = "Logging in...";
 
     try {
         // FIX: सेशन को सुरक्षित रखने के लिए setPersistence का उपयोग
         await setPersistence(auth, browserSessionPersistence);
         await signInWithEmailAndPassword(auth, dummyEmail, password);
         loginForm.reset();
+        loginBtn.disabled = false;
+        loginBtn.innerText = "Login";
     } catch (error) {
         alert("Invalid Mobile Number or Password!");
+        loginBtn.disabled = false;
+        loginBtn.innerText = "Login";
     }
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
 // ==================== 3. FORGOT & CHANGE PASSWORD ====================
-// ... (बाकी कोड में कोई बदलाव नहीं)
 document.getElementById('show-forgot-password').addEventListener('click', () => forgotModal.classList.remove('hidden'));
 document.getElementById('close-forgot-modal').addEventListener('click', () => {
     forgotModal.classList.add('hidden');
@@ -224,7 +231,13 @@ function loadCustomers() {
             return;
         }
         const customers = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
-            .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            .sort((a, b) => {
+                // FIX: Sorting issue for real-time customer updates
+                const timeA = a.createdAt ? a.createdAt.toMillis() : Date.now();
+                const timeB = b.createdAt ? b.createdAt.toMillis() : Date.now();
+                return timeB - timeA;
+            });
+            
         customers.forEach((data) => {
             if (data.totalDue > 0) totalShopDue += data.totalDue;
             const card = document.createElement('div');
@@ -261,7 +274,6 @@ function calculateTodayCollection() {
 }
 
 // ==================== 6. LEDGER & TRANSACTIONS ====================
-// ... (बाकी कोड में कोई बदलाव नहीं - search, whatsapp, transaction logic same rahega)
 function openLedger(id, name, phone, balance) {
     currentCustomer = { id, name, phone, balance };
     document.getElementById('current-customer-name').innerText = name;
@@ -319,7 +331,13 @@ function loadTransactions(customerID) {
             return;
         }
         const transactions = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
-            .sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0));
+            .sort((a, b) => {
+                // FIX: Sorting issue for new real-time transactions
+                const timeA = a.date ? a.date.toMillis() : Date.now();
+                const timeB = b.date ? b.date.toMillis() : Date.now();
+                return timeB - timeA;
+            });
+            
         transactions.forEach((data) => {
             const dateObj = data.date ? data.date.toDate() : new Date();
             const dateStr = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -334,6 +352,7 @@ function loadTransactions(customerID) {
     });
 }
 
+// ==================== 7. SEARCH & WHATSAPP FUNCTIONS ====================
 document.getElementById('customer-search').addEventListener('input', (e) => {
     const searchTerm = e.target.value.toLowerCase();
     const customerCards = document.querySelectorAll('.customer-card');
@@ -349,4 +368,4 @@ document.getElementById('whatsapp-remind-btn').addEventListener('click', () => {
     let message = currentCustomer.balance > 0 ? `नमस्ते ${currentCustomer.name},\nआपका बकाया (Due Balance) ₹${currentCustomer.balance} है।` : `नमस्ते ${currentCustomer.name},\nआपका ₹${Math.abs(currentCustomer.balance)} एडवांस जमा है।`;
     window.open(`https://wa.me/91${currentCustomer.phone}?text=${encodeURIComponent(message)}`, '_blank');
 });
-        
+    
