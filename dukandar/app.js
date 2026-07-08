@@ -97,7 +97,6 @@ loginForm.addEventListener('submit', async (e) => {
     loginBtn.innerText = "Logging in...";
 
     try {
-        // FIX: सेशन को सुरक्षित रखने के लिए setPersistence का उपयोग
         await setPersistence(auth, browserSessionPersistence);
         await signInWithEmailAndPassword(auth, dummyEmail, password);
         loginForm.reset();
@@ -219,7 +218,7 @@ document.getElementById('add-customer-form').addEventListener('submit', async (e
 
 function loadCustomers() {
     const q = query(collection(db, "khata_customers"), where("shopUID", "==", currentUserUID));
-    onSnapshot(q, (snapshot) => {
+    onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
         const listDiv = document.getElementById('customer-list');
         listDiv.innerHTML = '';
         let totalShopDue = 0;
@@ -232,9 +231,8 @@ function loadCustomers() {
         }
         const customers = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
             .sort((a, b) => {
-                // FIX: Sorting issue for real-time customer updates
-                const timeA = a.createdAt ? a.createdAt.toMillis() : Date.now();
-                const timeB = b.createdAt ? b.createdAt.toMillis() : Date.now();
+                const timeA = a.createdAt && typeof a.createdAt.toMillis === 'function' ? a.createdAt.toMillis() : Date.now() + 100000;
+                const timeB = b.createdAt && typeof b.createdAt.toMillis === 'function' ? b.createdAt.toMillis() : Date.now() + 100000;
                 return timeB - timeA;
             });
             
@@ -297,56 +295,114 @@ document.getElementById('btn-got-jama').addEventListener('click', () => {
     transModal.classList.remove('hidden');
 });
 
+// 🚀 FIX: Transaction Submit Logic (अब यह तुरंत काम करेगा)
 document.getElementById('transaction-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const amount = parseFloat(document.getElementById('trans-amount').value);
-    const remarks = document.getElementById('trans-remarks').value;
-    if (!currentCustomer) return;
+    
+    const amountInput = document.getElementById('trans-amount');
+    const remarksInput = document.getElementById('trans-remarks');
+    
+    const amount = parseFloat(amountInput.value);
+    let remarks = remarksInput.value.trim();
+    
+    // अगर कोई रिमार्क नहीं डाला, तो डिफ़ॉल्ट रिमार्क सेट करें
+    if (!remarks) {
+        remarks = (transactionType === 'GAVE') ? 'Goods given (Uudhar)' : 'Cash received (Jama)';
+    }
+
+    if (!currentCustomer || isNaN(amount) || amount <= 0) {
+        alert("कृपया सही अमाउंट दर्ज करें!");
+        return;
+    }
+
+    const submitBtn = document.getElementById('submit-trans-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Saving...";
+
     try {
+        // Firestore में एंट्री
         await addDoc(collection(db, "khata_transactions"), {
             customerID: currentCustomer.id,
             shopUID: currentUserUID,
             type: transactionType,
             amount: amount,
-            remarks: remarks || (transactionType === 'GAVE' ? 'Goods given' : 'Cash received'),
+            remarks: remarks,
             date: serverTimestamp()
         });
+
+        // बैलेंस अपडेट करें
         const newBalance = transactionType === 'GAVE' ? currentCustomer.balance + amount : currentCustomer.balance - amount;
         await setDoc(doc(db, "khata_customers", currentCustomer.id), { totalDue: newBalance }, { merge: true });
+
+        // UI बैलेंस अपडेट
         currentCustomer.balance = newBalance;
         document.getElementById('current-customer-balance').innerText = `₹ ${newBalance}`;
+
         transModal.classList.add('hidden');
         document.getElementById('transaction-form').reset();
-    } catch (error) { alert("Error: " + error.message); }
+    } catch (error) { 
+        alert("Error: " + error.message); 
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Save Entry";
+    }
 });
 
 function loadTransactions(customerID) {
     if (transactionUnsubscribe) transactionUnsubscribe();
+    
     const q = query(collection(db, "khata_transactions"), where("customerID", "==", customerID));
-    transactionUnsubscribe = onSnapshot(q, (snapshot) => {
+    
+    // 🚀 FIX: includeMetadataChanges: true (लोकल एंट्री को तुरंत UI में दिखाएगा)
+    transactionUnsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
         const listDiv = document.getElementById('transaction-list');
         listDiv.innerHTML = '';
+        
         if (snapshot.empty) {
             listDiv.innerHTML = '<div class="empty-state">No transactions found.</div>';
             return;
         }
-        const transactions = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
-            .sort((a, b) => {
-                // FIX: Sorting issue for new real-time transactions
-                const timeA = a.date ? a.date.toMillis() : Date.now();
-                const timeB = b.date ? b.date.toMillis() : Date.now();
-                return timeB - timeA;
-            });
-            
+        
+        const transactions = snapshot.docs.map(docSnap => {
+            const data = docSnap.data();
+            // पेंडिंग ट्रांजैक्शन (जब तक सर्वर पर न जाए) को फ्यूचर टाइम दो, ताकि पक्का टॉप पर रहे
+            const sortTime = data.date && typeof data.date.toMillis === 'function' 
+                ? data.date.toMillis() 
+                : Date.now() + 100000; 
+            return { id: docSnap.id, sortTime: sortTime, ...data };
+        }).sort((a, b) => b.sortTime - a.sortTime); // नया सबसे ऊपर
+        
         transactions.forEach((data) => {
             const dateObj = data.date ? data.date.toDate() : new Date();
             const dateStr = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+            
             const isGave = data.type === 'GAVE';
-            const color = isGave ? '#ef4444' : '#22c55e';
+            const color = isGave ? '#ef4444' : '#22c55e'; // उधार के लिए लाल, जमा के लिए हरा
             const sign = isGave ? '-' : '+';
+            
             const card = document.createElement('div');
             card.className = `trans-card ${isGave ? 'trans-gave' : 'trans-got'}`;
-            card.innerHTML = `<div class="trans-details"><p class="date">${dateStr}</p><p class="remark">${data.remarks}</p></div><div class="trans-amount" style="color: ${color};">${sign} ₹${data.amount}</div>`;
+            
+            // 🚀 FIX: Inline CSS Backup (यह लाल एंट्री को छिपने से रोकेगा)
+            card.style.display = 'flex';
+            card.style.justifyContent = 'space-between';
+            card.style.alignItems = 'center';
+            card.style.background = 'rgba(255,255,255,0.9)';
+            card.style.padding = '14px 16px';
+            card.style.marginBottom = '12px';
+            card.style.borderRadius = '12px';
+            card.style.borderLeft = `4px solid ${color}`;
+            card.style.boxShadow = '0 4px 10px rgba(0,0,0,0.05)';
+            
+            card.innerHTML = `
+                <div class="trans-details">
+                    <p class="date" style="font-size: 12px; color: #64748b; margin-bottom: 4px;">${dateStr}</p>
+                    <p class="remark" style="font-size: 14px; font-weight: 600; color: #1f2937;">${data.remarks}</p>
+                </div>
+                <div class="trans-amount" style="font-weight: 700; font-size: 16px; color: ${color};">
+                    ${sign} ₹${data.amount}
+                </div>
+            `;
             listDiv.appendChild(card);
         });
     });
@@ -368,4 +424,4 @@ document.getElementById('whatsapp-remind-btn').addEventListener('click', () => {
     let message = currentCustomer.balance > 0 ? `नमस्ते ${currentCustomer.name},\nआपका बकाया (Due Balance) ₹${currentCustomer.balance} है।` : `नमस्ते ${currentCustomer.name},\nआपका ₹${Math.abs(currentCustomer.balance)} एडवांस जमा है।`;
     window.open(`https://wa.me/91${currentCustomer.phone}?text=${encodeURIComponent(message)}`, '_blank');
 });
-    
+                        
