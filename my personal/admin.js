@@ -1,9 +1,9 @@
 // ==================== FIREBASE CONFIGURATION ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+// 👇 यहाँ setPersistence और browserSessionPersistence जोड़ा गया है 👇
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// 👇 यहाँ आपकी नई 'Digital-Khata' प्रोजेक्ट की चाबियां डाल दी गई हैं 👇
 const firebaseConfig = {
     apiKey: "AIzaSyD7dprFu5MIL4EgW0lJ0EkbBZeNguF4d3c",
     authDomain: "digital-khata-64fa9.firebaseapp.com",
@@ -18,7 +18,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ==================== SUPER ADMIN CREDENTIALS ====================
-// ध्यान दें: यह आपकी फिक्स एडमिन ईमेल है। कोई और इस पैनल में लॉगिन नहीं कर पाएगा।
 const MASTER_ADMIN_EMAIL = "admin@khata.com"; 
 
 // ==================== DOM ELEMENTS ====================
@@ -30,19 +29,21 @@ const searchInput = document.getElementById('admin-search-shop');
 
 let allShopsData = [];
 
-// ==================== 1. SECURE AUTHENTICATION ====================
+// ==================== 1. SECURE AUTHENTICATION (BUG FIXED) ====================
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('admin-email').value;
     const password = document.getElementById('admin-password').value;
 
-    // सिर्फ मास्टर एडमिन ईमेल को ही अंदर जाने की इजाज़त है
     if (email !== MASTER_ADMIN_EMAIL) {
         alert("Access Denied! You are not authorized.");
         return;
     }
 
     try {
+        // 👇 यह लाइन एडमिन के लॉगिन को सिर्फ इसी टैब तक सीमित रखेगी (दूसरे टैब को डिस्टर्ब नहीं करेगी)
+        await setPersistence(auth, browserSessionPersistence);
+        
         await signInWithEmailAndPassword(auth, email, password);
         loginForm.reset();
     } catch (error) {
@@ -103,7 +104,6 @@ function renderShops(shopsArray) {
         const isBlocked = shop.isBlocked || false;
         const isPremium = shop.isPremium || false;
 
-        // बैज (Badges) सेट करना
         let badgeHTML = '';
         if (isBlocked) {
             badgeHTML = `<span class="badge badge-blocked">Blocked</span>`;
@@ -176,4 +176,4 @@ window.deleteShop = async (shopId) => {
         await deleteDoc(doc(db, "khata_shops", shopId));
     }
 };
-                
+        
