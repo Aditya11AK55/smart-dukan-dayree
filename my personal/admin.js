@@ -1,6 +1,5 @@
 // ==================== FIREBASE CONFIGURATION ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-// 👇 यहाँ setPersistence और browserSessionPersistence जोड़ा गया है 👇
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, doc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -18,6 +17,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ==================== SUPER ADMIN CREDENTIALS ====================
+// ध्यान दें: आपको Firebase Authentication में जाकर इस ईमेल और एक पासवर्ड के साथ मैनुअली एक अकाउंट बनाना होगा।
 const MASTER_ADMIN_EMAIL = "admin@khata.com"; 
 
 // ==================== DOM ELEMENTS ====================
@@ -29,7 +29,7 @@ const searchInput = document.getElementById('admin-search-shop');
 
 let allShopsData = [];
 
-// ==================== 1. SECURE AUTHENTICATION (BUG FIXED) ====================
+// ==================== 1. SECURE AUTHENTICATION ====================
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('admin-email').value;
@@ -41,9 +41,8 @@ loginForm.addEventListener('submit', async (e) => {
     }
 
     try {
-        // 👇 यह लाइन एडमिन के लॉगिन को सिर्फ इसी टैब तक सीमित रखेगी (दूसरे टैब को डिस्टर्ब नहीं करेगी)
+        // यह एडमिन लॉगिन को सिर्फ इसी सेशन (टैब) तक सीमित रखेगा
         await setPersistence(auth, browserSessionPersistence);
-        
         await signInWithEmailAndPassword(auth, email, password);
         loginForm.reset();
     } catch (error) {
@@ -172,8 +171,8 @@ window.toggleBlock = async (shopId, blockStatus) => {
 };
 
 window.deleteShop = async (shopId) => {
-    if(confirm("⚠️ चेतावनी: क्या आप इस दुकानदार का पूरा अकाउंट हमेशा के लिए डिलीट करना चाहते हैं?")) {
+    if(confirm("⚠️ चेतावनी: क्या आप इस दुकानदार का पूरा अकाउंट हमेशा के लिए डिलीट करना चाहते हैं? इससे उनका सारा डेटा हट जाएगा।")) {
         await deleteDoc(doc(db, "khata_shops", shopId));
     }
 };
-        
+                       
