@@ -173,3 +173,5 @@ window.deleteShop = async (shopId) => {
         await deleteDoc(doc(db, "khata_shops", shopId));
     }
 };
+
+
